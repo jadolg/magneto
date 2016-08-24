@@ -36,7 +36,7 @@ def printProgress(percent){
  * downloads a SmbFile to a Path
  * only used to download files, not directories 
  **/
-def downloadFile(SmbFile file, String path){
+def downloadFile(SmbFile file, String path, int delay){
     try{
         file.connect()
         def newfile = new File(path+"/"+file.getName())
@@ -51,10 +51,14 @@ def downloadFile(SmbFile file, String path){
         while (readf > 0){
             printProgress(percent(newfile,file))
             f.write(buf,0,readf)
+            if (delay > 0){
+                sleep(delay)
+            }
             readf = is.read(buf)
         }
         f.close()
         println "[||||||||||||] 100%"
+        println "file saved to ${path}"
         println "[ok]"
         return true
     } catch (Exception e){
@@ -85,18 +89,19 @@ def getFilesFromDir(SmbFile baseDir) {
  * writes the configuration file with .magneto_task extension
  * in order to resume the task
  **/
-def writeConf(url, pathToSave, ua, user = "", password = ""){
+def writeConf(url, pathToSave, delay, ua, user = "", password = ""){
     String aux = (String)url
     
     while (aux.endsWith("/")){
         aux = aux.substring(0,aux.length()-1)
     }
     aux = aux.substring(aux.lastIndexOf("/"),aux.length())
-    println "writing config to "+pathToSave+aux+".magneto_task"
+    println "writing config to ${pathToSave}${aux}.magneto_task"
     File fo = new File(pathToSave+"/"+aux+".magneto_task")
 
     fo.append(url+"\n")
     fo.append(pathToSave+"\n")
+    fo.append(String.valueOf(delay)+"\n")
     fo.append(ua+"\n")
     if (ua == "y"){
         fo.append(user+"\n")
@@ -106,11 +111,12 @@ def writeConf(url, pathToSave, ua, user = "", password = ""){
 }
 
 public static void main (args) {
-    println "Magneto v1.2 by \$h@"
+    println "Magneto v1.3 by \$h@"
     println "download from smb servers without loosing track of your files\n"
     Console sc = System.console()
     String url = ""
     def pathToSave = "."
+    def delay = "0"
     def ua = "n"
     def user = ""
     def password = ""
@@ -122,6 +128,7 @@ public static void main (args) {
             
             url = br.readLine()
             pathToSave = br.readLine()
+            delay = Integer.valueOf(br.readLine())
             ua = br.readLine()
             if (ua == "y"){
                 user = br.readLine()
@@ -134,6 +141,7 @@ public static void main (args) {
     } else {
         url = sc.readLine("url: ")
         pathToSave = sc.readLine("path to save: ")
+        delay = Integer.valueOf(sc.readLine("delay(miliseconds): "))
         ua = sc.readLine("use auth (y/n): ")
     }
     
@@ -153,7 +161,7 @@ public static void main (args) {
     }
     
     if (args.length <= 0){
-        writeConf(url,pathToSave,ua,user,password)
+        writeConf(url,pathToSave, delay, ua, user, password)
     }
     
     try{
@@ -179,7 +187,7 @@ public static void main (args) {
             for (SmbFile f in filelist){
                 println "file ${++c} of ${filelist.size}"
                 println "starting download for: ${f.getPath()}"
-                while (!downloadFile(f,pathToSave+"/"+f.getParent().replace(url,""))){
+                while (!downloadFile(f,pathToSave+"/"+f.getParent().replace(url,""),delay)){
                     sleep(100)
                 }
             }
@@ -188,7 +196,7 @@ public static void main (args) {
         
         } else if (file.isFile()){
             println "starting download for: ${file.getName()}"
-            while (!downloadFile(file,pathToSave)){
+            while (!downloadFile(file,pathToSave,delay)){
                 sleep(100)
             }
         }
