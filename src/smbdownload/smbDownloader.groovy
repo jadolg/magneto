@@ -127,7 +127,7 @@ public static void main (args) {
                 user = br.readLine()
                 password = br.readLine()            
             }
-            br.close();
+            br.close()
 
         } catch (IOException e) {
         }
@@ -147,9 +147,9 @@ public static void main (args) {
             password = new String(sc.readPassword("Password: "))
         }
         NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication("", user, password)
-        file = new SmbFile(url,auth);
+        file = new SmbFile(url,auth)
     } else {
-        file = new SmbFile(url);
+        file = new SmbFile(url)
     }
     
     if (args.length <= 0){
